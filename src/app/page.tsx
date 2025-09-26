@@ -3,6 +3,11 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
+import {
+  sendHeavyHapticFeedbackCommand,
+  sendLightHapticFeedbackCommand,
+  sendMediumHapticFeedbackCommand,
+} from "@/utils/haptics";
 
 const images = [
   { src: "/couples/couple1.png", alt: "couple1", bg: "bg-pink-400" },
@@ -86,6 +91,7 @@ const LandingPage: React.FC = () => {
 const CTAButton: React.FC = () => {
   const router = useRouter();
   const handleClick = async () => {
+    sendLightHapticFeedbackCommand();
     router.push("/home");
   };
   return (
