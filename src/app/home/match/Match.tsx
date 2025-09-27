@@ -107,7 +107,7 @@ const Match = () => {
             sendLightHapticFeedbackCommand;
             setLikesReceived(false);
             setLikesSent((prev: boolean) => !prev);
-            if (likesSent) LikesSent();
+            LikesSent();
           }}
           variant={"match"}
           className="w-[150px] bg-gradient-to-tl from-amber-300 via-amber-100 to-amber-400 focus:bg-gradient-to-tr focus:from-amber-400 focus:via-amber-100 focus:to-amber-300 transition-all duration-350 text-slate-900 font-space-mono-bold tracking-tight text-xs"
@@ -120,7 +120,7 @@ const Match = () => {
             sendLightHapticFeedbackCommand;
             setLikesSent(false);
             setLikesReceived((prev) => !prev);
-            if (likesReceived) LikesReceived();
+            LikesReceived();
           }}
           variant={"match"}
           className="w-[150px] bg-gradient-to-tr from-amber-400 via-amber-100 to-amber-300 focus:bg-gradient-to-tl focus:from-amber-300 focus:via-amber-100 focus:to-amber-400 transition-all duration-350 font-space-mono-bold tracking-tight text-xs"

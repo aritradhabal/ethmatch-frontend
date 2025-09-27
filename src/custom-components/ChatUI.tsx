@@ -6,8 +6,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useRef, useState } from "react";
 import { SendIcon } from "lucide-react";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 
 export type ChatRole = "user" | "assistant";
+
+// Updated Message interface to match the API structure
+export interface Message {
+  address: string;
+  content: string;
+  counter: number;
+}
 
 export interface ChatMessage {
   id: string;
@@ -31,25 +39,29 @@ interface ChatUIProps {
   profiles?: Profile[];
   openchatbtn: any;
   setOpenChatbtn: any;
+  addressTarget: string;
+  myAddress: string;
 }
 
 export function ChatUI({
   title = "Chat",
-  subtitle = "Ask anything and I’ll help",
+  subtitle = "Ask anything and I'll help",
   className,
   initialMessages,
   onSend,
   profiles,
-
   openchatbtn,
   setOpenChatbtn,
+  addressTarget,
+  myAddress,
 }: ChatUIProps) {
+  const session = useSession();
   const [messages, setMessages] = useState<ChatMessage[]>(
     initialMessages ?? [
       {
         id: crypto.randomUUID(),
         role: "assistant",
-        content: "Hi! I’m here to help. What can I do for you today?",
+        content: "Loading...",
       },
     ]
   );
@@ -57,15 +69,84 @@ export function ChatUI({
 
   const endRef = useRef<HTMLDivElement | null>(null);
 
-  const people: Profile[] = profiles ?? [
+  const people: any = profiles ?? [
     {
       id: "1",
-      name: "Ankita Gurung",
+      name: session.data?.user.name,
       initials: "AG",
       avatarUrl: "/placeholder.svg",
     },
   ];
   const [activeId, setActiveId] = useState<string>(people[0]?.id ?? "");
+  const [isAllowed, setIsAllowed] = useState<boolean>(false);
+  // Fetch messages from API
+
+  const getMutualType = async (
+    addressA: string,
+    addressB: string,
+    type: string
+  ) => {
+    if (!session) return;
+    const payload = {
+      addressA: addressA,
+      addressB: addressB,
+      type: type,
+    };
+    const res = await fetch("/api/get-mutual-type", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return false;
+    else {
+      return res.json();
+    }
+  };
+
+  useEffect(() => {
+    const getMessagesData = async (address: string) => {
+      if (!session.data?.user?.id) return;
+      const payload = {
+        address: addressTarget,
+      };
+      const res = await fetch("/api/get-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) return false;
+      else {
+        return res.json();
+      }
+    };
+
+    const fetchMessages = async () => {
+      const msgs = await getMessagesData(session.data?.user.id as string);
+      if (msgs && msgs.messages) {
+        // Convert API messages to ChatMessage format
+        const chatMessages: ChatMessage[] = msgs.messages.map(
+          (msg: Message, index: number) => ({
+            id: `msg-${msg.counter}-${index}`,
+            role: "assistant" as ChatRole, // Messages from API are from other users
+            content: msg.content,
+          })
+        );
+        setMessages(chatMessages);
+      }
+    };
+
+    if (session.data?.user?.id) {
+      fetchMessages();
+    }
+    const getMututalTypeData = async () => {
+      const like = await getMutualType(myAddress, addressTarget, "like");
+      if (like) {
+        setIsAllowed(true);
+      } else {
+        setIsAllowed(false);
+      }
+    };
+  }, [session]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -149,14 +230,14 @@ export function ChatUI({
                 </AvatarFallback>
               </Avatar>
               <span className="whitespace-nowrap text-xs font-medium text-foreground px-1 rounded-sm truncate block max-w-35">
-                Ankita Gurung
+                {session.data?.user.username}
               </span>
             </button>
           </div>
-          <div className="overflow-hidden rounded-[6px] border-1 border-black">
-            <ScrollArea className="h-[420px] max-h-[calc(100svh-12rem)] bg-rose-50">
+          <div className="overflow-hidden rounded-[6px] border-1 border-black w-full">
+            <ScrollArea className="h-[420px] max-h-[calc(100svh-12rem)] bg-rose-50 ">
               <ScrollArea
-                className="h-[420px] max-h-[calc(100svh-12rem)] bg-rose-50"
+                className="h-[420px] max-h-[calc(100svh-12rem)] bg-rose-50 "
                 style={{ willChange: "height", backfaceVisibility: "hidden" }}
               >
                 <div className="space-y-3 py-4 px-3 max-w-full">
@@ -170,6 +251,7 @@ export function ChatUI({
           </div>
           <div className="w-full flex flex-row justify-center items-center rounded-[6px] border-1 bg-rose-50 overflow-hidden px-1">
             <Input
+              disabled={!isAllowed}
               placeholder="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -177,6 +259,7 @@ export function ChatUI({
               className="shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none border-0 h-[46px] w-full bg-rose-50 overflow-hidden"
             />
             <Button
+              disabled={!isAllowed}
               type="button"
               variant="noShadow"
               onClick={handleSend}

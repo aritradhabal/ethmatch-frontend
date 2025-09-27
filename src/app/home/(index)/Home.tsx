@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Dispatch, SetStateAction, useState } from "react";
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
@@ -13,7 +13,8 @@ import { useSession } from "next-auth/react";
 
 const Home = () => {
   const session = useSession();
-  const [cards, setCards] = useState(rawCardData);
+  // const [cards, setCards] = useState(rawCardData);
+  const [cards, setCards] = useState<any[]>([]);
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [openchatbtn, setOpenChatbtn] = useState(false);
@@ -53,6 +54,57 @@ const Home = () => {
       return true;
     }
   };
+  const getRecommendations = async (address: string) => {
+    if (!session) return;
+    const payload = {
+      address: address,
+    };
+
+    const res = await fetch("/api/recommend", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return false;
+    else {
+      return res.json();
+    }
+  };
+  const [cardsAPI, setCardsAPI] = useState<any>();
+  useEffect(() => {
+    const getRecommendationsData = async () => {
+      const recommendations = await getRecommendations(
+        session.data?.user.id as string
+      );
+      setCardsAPI(recommendations);
+    };
+    getRecommendationsData();
+  }, [session]);
+
+  useEffect(() => {
+    if (!cardsAPI?.recommendations) return;
+
+    const CardData_ = cardsAPI.recommendations.map((rec: any, idx: number) => {
+      const p = rec.properties ?? {};
+      return {
+        id: idx,
+        address: p.address ?? "",
+        username: p.username ?? p.name ?? "",
+        lookingFor: p.lookingFor ?? "Both",
+        verified: p.verified ?? "Device",
+        name: p.name ?? "",
+        url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop",
+        gender: p.gender ?? "",
+        preferences: Array.isArray(p.preferences) ? p.preferences : [],
+        age: typeof p.age === "number" ? p.age : 0,
+        city: p.city ?? "",
+        messages: Array.isArray(p.messages) ? p.messages : [],
+      };
+    });
+
+    setCards(CardData_);
+  }, [cardsAPI]);
+
   return (
     <div className="pt-12 w-screen flex flex-col justify-center items-center overflow-clip gap-y-7">
       <div className=" grid h-auto place-items-center">
@@ -66,6 +118,14 @@ const Home = () => {
               {...card}
               sendLike={sendLike}
               sendDislike={sendDislike}
+              address={card.address}
+              verified={card.verified}
+              name={card.name}
+              username={card.username}
+              lookingFor={card.lookingFor}
+              preferences={card.preferences}
+              age={card.age}
+              city={card.city}
             />
           );
         })}
@@ -85,6 +145,8 @@ const Home = () => {
           <div className={cn("fixed inset-0 z-50 grid place-items-center p-4")}>
             <div className="w-full max-w-lg sm:max-w-xl">
               <ChatUI
+                addressTarget={cards[cards.length - 1].address}
+                myAddress={session.data?.user.id as string}
                 openchatbtn={openchatbtn}
                 setOpenChatbtn={setOpenChatbtn}
               />
@@ -106,17 +168,30 @@ const Card = ({
   setSelectedCard,
   sendLike,
   sendDislike,
+  address,
+  verified,
+  name,
+  username,
+  lookingFor,
+  preferences,
+  age,
+  city,
 }: {
   id: number;
   url: string;
-  // setCards: Dispatch<SetStateAction<Card[]>>;
-  // cards: Card[];
   cards: any;
   setCards: any;
-  // setSelectedCard: Dispatch<SetStateAction<Card | null>>;
   setSelectedCard: any;
   sendLike: any;
   sendDislike: any;
+  address: any;
+  verified: any;
+  name: any;
+  username: any;
+  lookingFor: any;
+  preferences: any;
+  age: any;
+  city: any;
 }) => {
   const x = useMotionValue(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -276,7 +351,17 @@ const Card = ({
         </motion.div>
       </motion.div>
       <div className="w-60 bg-amber-100 rounded-sm overflow-y-scroll">
-        <ProfileDetails />
+        <ProfileDetails
+          userProfile={{
+            city,
+            verified,
+            name,
+            username,
+            lookingFor,
+            preferences,
+            age,
+          }}
+        />
       </div>
     </motion.div>
   );
@@ -339,64 +424,5 @@ const cardData: Card[] = [
   {
     id: 13,
     url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-  },
-];
-
-const rawCardData = [
-  {
-    id: 0,
-    address: "0x0",
-    username: "jon_3",
-    lookingFor: "Male",
-    verified: "Device",
-    name: "Alice",
-    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    gender: "Female",
-    preferences: ["dark-mode", "cats"],
-    age: 25,
-    city: "Berlin",
-    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
-  },
-  {
-    id: 1,
-    address: "0x1",
-    username: "jon_3",
-    lookingFor: "Male",
-    verified: "Device",
-    name: "Alice",
-    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    gender: "Female",
-    preferences: ["dark-mode", "cats"],
-    age: 25,
-    city: "Berlin",
-    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
-  },
-  {
-    id: 2,
-    address: "0x2",
-    username: "jon_3",
-    lookingFor: "Male",
-    verified: "Device",
-    name: "Alice",
-    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    gender: "Female",
-    preferences: ["dark-mode", "cats"],
-    age: 25,
-    city: "Berlin",
-    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
-  },
-  {
-    id: 3,
-    address: "0x3",
-    username: "jon_3",
-    lookingFor: "Male",
-    verified: "Device",
-    name: "Alice",
-    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-    gender: "Female",
-    preferences: ["dark-mode", "cats"],
-    age: 25,
-    city: "Berlin",
-    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
   },
 ];
