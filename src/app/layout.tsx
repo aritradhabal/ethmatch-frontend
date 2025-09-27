@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Space_Mono, Lexend } from "next/font/google";
 import "./globals.css";
-import Header from "@/custom-components/Header";
-import { MiniKitProvider } from "@worldcoin/minikit-js/minikit-provider";
-import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
+import ClientProviders from "@/Providers";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -58,14 +56,7 @@ export default async function RootLayout({
   `,
             }}
           />
-          <MiniKitProvider
-            props={{
-              appId: process.env.NEXT_PUBLIC_APP_ID as string,
-            }}
-          >
-            <Header />
-            <SessionProvider session={session}>{children}</SessionProvider>
-          </MiniKitProvider>
+          <ClientProviders session={session}>{children}</ClientProviders>
         </div>
       </body>
     </html>

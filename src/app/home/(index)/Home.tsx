@@ -9,12 +9,51 @@ import { sendLightHapticFeedbackCommand } from "@/utils/haptics";
 import ProfileDetails from "@/custom-components/ProfileDetails";
 import { cn } from "@/lib/utils";
 import ChatUI from "@/custom-components/ChatUI";
+import { useSession } from "next-auth/react";
 
 const Home = () => {
-  const [cards, setCards] = useState<Card[]>(cardData);
+  const session = useSession();
+  // const [cards, setCards] = useState<Card[]>(cardData);
+  const [cards, setCards] = useState(rawCardData);
+
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [openchatbtn, setOpenChatbtn] = useState(false);
-
+  const sendLike = async (likedAddress: string) => {
+    if (!session) return;
+    const payload = {
+      sourceNodeId: "node_" + session.data?.user.id,
+      targetNodeId: "node_" + likedAddress,
+      type: "like",
+      properties: JSON.stringify({}),
+    };
+    const res = await fetch("/api/create-relation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return false;
+    else {
+      return true;
+    }
+  };
+  const sendDislike = async (likedAddress: string) => {
+    if (!session) return;
+    const payload = {
+      sourceNodeId: "node_" + session.data?.user.id,
+      targetNodeId: "node_" + likedAddress,
+      type: "dislike",
+      properties: JSON.stringify({}),
+    };
+    const res = await fetch("/api/create-relation", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) return false;
+    else {
+      return true;
+    }
+  };
   return (
     <div className="pt-12 w-screen flex flex-col justify-center items-center overflow-clip gap-y-7">
       <div className=" grid h-auto place-items-center">
@@ -26,6 +65,8 @@ const Home = () => {
               setCards={setCards}
               setSelectedCard={setSelectedCard}
               {...card}
+              sendLike={sendLike}
+              sendDislike={sendDislike}
             />
           );
         })}
@@ -64,12 +105,19 @@ const Card = ({
   setCards,
   cards,
   setSelectedCard,
+  sendLike,
+  sendDislike,
 }: {
   id: number;
   url: string;
-  setCards: Dispatch<SetStateAction<Card[]>>;
-  cards: Card[];
-  setSelectedCard: Dispatch<SetStateAction<Card | null>>;
+  // setCards: Dispatch<SetStateAction<Card[]>>;
+  // cards: Card[];
+  cards: any;
+  setCards: any;
+  // setSelectedCard: Dispatch<SetStateAction<Card | null>>;
+  setSelectedCard: any;
+  sendLike: any;
+  sendDislike: any;
 }) => {
   const x = useMotionValue(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -103,16 +151,18 @@ const Card = ({
     return `${rotateRaw.get() + offset}deg`;
   });
 
-  const index = cards.findIndex((card) => card.id === id);
+  const index = cards.findIndex((card: any) => card.id === id);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = async () => {
     setIsDragging(false);
     if (x.get() > 50) {
-      setCards((pv) => pv.filter((v) => v.id !== id));
+      setCards((pv: any) => pv.filter((v: any) => v.id !== id));
       sendLightHapticFeedbackCommand();
+      await sendLike(cards[cards.length - 1].address);
     } else if (x.get() < -80) {
-      setCards((pv) => pv.filter((v) => v.id !== id));
+      setCards((pv: any) => pv.filter((v: any) => v.id !== id));
       sendLightHapticFeedbackCommand();
+      await sendDislike(cards[cards.length - 1].address);
     } else {
       animate(x, 0, {
         type: "spring",
@@ -290,5 +340,64 @@ const cardData: Card[] = [
   {
     id: 13,
     url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+];
+
+const rawCardData = [
+  {
+    id: 0,
+    address: "0x0",
+    username: "jon_3",
+    lookingFor: "Male",
+    verified: "Device",
+    name: "Alice",
+    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    gender: "Female",
+    preferences: ["dark-mode", "cats"],
+    age: 25,
+    city: "Berlin",
+    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
+  },
+  {
+    id: 1,
+    address: "0x1",
+    username: "jon_3",
+    lookingFor: "Male",
+    verified: "Device",
+    name: "Alice",
+    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    gender: "Female",
+    preferences: ["dark-mode", "cats"],
+    age: 25,
+    city: "Berlin",
+    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
+  },
+  {
+    id: 2,
+    address: "0x2",
+    username: "jon_3",
+    lookingFor: "Male",
+    verified: "Device",
+    name: "Alice",
+    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    gender: "Female",
+    preferences: ["dark-mode", "cats"],
+    age: 25,
+    city: "Berlin",
+    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
+  },
+  {
+    id: 3,
+    address: "0x3",
+    username: "jon_3",
+    lookingFor: "Male",
+    verified: "Device",
+    name: "Alice",
+    url: "https://images.unsplash.com/photo-1758315716325-d2c7c0eb9659?q=80&w=1315&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    gender: "Female",
+    preferences: ["dark-mode", "cats"],
+    age: 25,
+    city: "Berlin",
+    messages: [{ address: "0xdef456...", content: "Hello!", counter: 1 }],
   },
 ];

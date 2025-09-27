@@ -92,25 +92,6 @@ const LandingPage: React.FC = () => {
   );
 };
 
-// const CTAButton: React.FC = () => {
-//   const router = useRouter();
-//   const handleClick = async () => {
-//     sendLightHapticFeedbackCommand();
-//     router.push("/home");
-//   };
-//   return (
-//     <div className="flex justify-center items-center">
-//       <Button
-//         onClick={handleClick}
-//         className="bg-[#F3F2F0] text-slate-950 px-10 h-13 font-lexend text-sm flex justify-center items-center gap-x-2"
-//       >
-//         <Image src="/logos/world.png" alt="world" height={25} width={25} />
-//         <p className="text-md">Explore the new world</p>
-//       </Button>
-//     </div>
-//   );
-// };
-
 const CTAButton: React.FC = () => {
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
