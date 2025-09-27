@@ -9,7 +9,7 @@ const Header = () => {
   return (
     <div className="w-screen fixed top-5 px-5 md:px-20 xl:px-50 2xl:px-60 h-20 flex justify-center items-center z-10">
       <div className="w-full px-3 md:px-10 flex justify-center md:justify-between items-center h-20 md:bg-amber-300 md:border-[2.5px] border-[var(--primary_)]">
-        {pathname === "/" && (
+        {(pathname === "/" || pathname === "/blind") && (
           <Link
             onClick={sendLightHapticFeedbackCommand}
             href="/"
@@ -21,7 +21,7 @@ const Header = () => {
           </Link>
         )}
 
-        {pathname !== "/" && (
+        {pathname !== "/" && pathname !== "/blind" && (
           <Link
             onClick={sendLightHapticFeedbackCommand}
             href="/blind"

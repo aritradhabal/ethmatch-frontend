@@ -37,12 +37,14 @@ export default function ProfileModal() {
   const session = useSession();
   const router = useRouter();
   const preferences = [
-    "Neutral",
-    "RandInt",
-    "Random",
-    "BigInt",
-    "Both",
-    "Either",
+    "Music",
+    "Tech",
+    "Art",
+    "Food",
+    "Books",
+    "Movies",
+    "TV",
+    "Games",
   ];
   const [selectedPreferences, setSelectedPreferences] = useState<string[]>([]);
   const [gender, setGender] = useState<string>();
@@ -65,7 +67,7 @@ export default function ProfileModal() {
       lookingFor: lookingFor,
       profilePicture: profilePicture,
       preferences: selectedPreferences,
-      verified: verification_level,
+      verified: "Orb",
     };
 
     try {
