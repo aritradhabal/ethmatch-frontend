@@ -7,6 +7,8 @@ import Image from "next/image";
 import { MessagesSquare } from "lucide-react";
 import { sendLightHapticFeedbackCommand } from "@/utils/haptics";
 import ProfileDetails from "@/custom-components/ProfileDetails";
+import { cn } from "@/lib/utils";
+import ChatUI from "@/custom-components/ChatUI";
 
 const Home = () => {
   const [cards, setCards] = useState<Card[]>(cardData);
@@ -38,8 +40,17 @@ const Home = () => {
           className=" bg-lime-300 font-space-mono-bold z-50 border-2 cursor-pointer"
         >
           <MessagesSquare /> Join the Chat
-          {/* {openchatbtn && <div>Chat Box</div>} */}
         </Button>
+        {openchatbtn && (
+          <div className={cn("fixed inset-0 z-50 grid place-items-center p-4")}>
+            <div className="w-full max-w-lg sm:max-w-xl">
+              <ChatUI
+                openchatbtn={openchatbtn}
+                setOpenChatbtn={setOpenChatbtn}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
