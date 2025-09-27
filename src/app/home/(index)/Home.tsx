@@ -13,7 +13,6 @@ import { useSession } from "next-auth/react";
 
 const Home = () => {
   const session = useSession();
-  // const [cards, setCards] = useState<Card[]>(cardData);
   const [cards, setCards] = useState(rawCardData);
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
