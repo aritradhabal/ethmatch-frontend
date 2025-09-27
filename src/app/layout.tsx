@@ -3,7 +3,8 @@ import { Geist, Geist_Mono, Space_Mono, Lexend } from "next/font/google";
 import "./globals.css";
 import Header from "@/custom-components/Header";
 import { MiniKitProvider } from "@worldcoin/minikit-js/minikit-provider";
-
+import { SessionProvider } from "next-auth/react";
+import { auth } from "@/auth";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -33,11 +34,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
   return (
     <html lang="en">
       <body
@@ -62,7 +64,7 @@ export default function RootLayout({
             }}
           >
             <Header />
-            {children}
+            <SessionProvider session={session}>{children}</SessionProvider>
           </MiniKitProvider>
         </div>
       </body>

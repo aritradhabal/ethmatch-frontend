@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import {
@@ -8,6 +8,10 @@ import {
   sendLightHapticFeedbackCommand,
   sendMediumHapticFeedbackCommand,
 } from "@/utils/haptics";
+import { useMiniKit } from "@worldcoin/minikit-js/minikit-provider";
+import { useSession } from "next-auth/react";
+import { walletAuth } from "@/auth/wallet";
+import ProfileModal from "@/custom-components/ProfileModal";
 
 const images = [
   { src: "/couples/couple1.png", alt: "couple1", bg: "bg-pink-400" },
@@ -88,21 +92,68 @@ const LandingPage: React.FC = () => {
   );
 };
 
+// const CTAButton: React.FC = () => {
+//   const router = useRouter();
+//   const handleClick = async () => {
+//     sendLightHapticFeedbackCommand();
+//     router.push("/home");
+//   };
+//   return (
+//     <div className="flex justify-center items-center">
+//       <Button
+//         onClick={handleClick}
+//         className="bg-[#F3F2F0] text-slate-950 px-10 h-13 font-lexend text-sm flex justify-center items-center gap-x-2"
+//       >
+//         <Image src="/logos/world.png" alt="world" height={25} width={25} />
+//         <p className="text-md">Explore the new world</p>
+//       </Button>
+//     </div>
+//   );
+// };
+
 const CTAButton: React.FC = () => {
   const router = useRouter();
-  const handleClick = async () => {
+  const [isPending, setIsPending] = useState(false);
+  const { isInstalled } = useMiniKit();
+  const session = useSession();
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+
+  const handleClick = useCallback(async () => {
     sendLightHapticFeedbackCommand();
-    router.push("/home");
-  };
+    if (!isInstalled || isPending) {
+      return;
+    }
+
+    if (session.status !== "authenticated") {
+      setIsPending(true);
+      try {
+        await walletAuth(setProfileModalOpen);
+      } catch (error) {
+        console.error("Wallet authentication button error", error);
+        setIsPending(false);
+        return;
+      }
+      setIsPending(false);
+    } else {
+      router.push("/home");
+    }
+  }, [isInstalled, isPending, session]);
+
   return (
     <div className="flex justify-center items-center">
-      <Button
-        onClick={handleClick}
-        className="bg-[#F3F2F0] text-slate-950 px-10 h-13 font-lexend text-sm flex justify-center items-center gap-x-2"
-      >
-        <Image src="/logos/world.png" alt="world" height={25} width={25} />
-        <p className="text-md">Explore the new world</p>
-      </Button>
+      {profileModalOpen ? (
+        <ProfileModal />
+      ) : (
+        <Button
+          onClick={handleClick}
+          className=" bg-[#F3F2F0] text-slate-950 px-10 h-13 font-lexend text-sm flex justify-center items-center gap-x-2"
+        >
+          <Image src="/logos/world.png" alt="world" height={25} width={25} />
+          <p className="text-md">
+            {isPending ? "Logging in..." : "Explore the new world"}
+          </p>
+        </Button>
+      )}
     </div>
   );
 };
