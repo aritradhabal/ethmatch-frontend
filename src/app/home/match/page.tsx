@@ -1,10 +1,10 @@
-import Home from "@/custom-components/Home";
 import React from "react";
+import Match from "./Match";
 
 const page = () => {
   return (
     <>
-      <Home />
+      <Match />
     </>
   );
 };

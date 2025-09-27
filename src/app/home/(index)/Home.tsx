@@ -6,7 +6,7 @@ import { motion, useMotionValue, useTransform, animate } from "motion/react";
 import Image from "next/image";
 import { MessagesSquare } from "lucide-react";
 import { sendLightHapticFeedbackCommand } from "@/utils/haptics";
-import ProfileDetails from "./ProfileDetails";
+import ProfileDetails from "@/custom-components/ProfileDetails";
 
 const Home = () => {
   const [cards, setCards] = useState<Card[]>(cardData);
@@ -177,8 +177,6 @@ const Card = ({
           priority={isFront}
           loading={isFront ? "eager" : "lazy"}
           fetchPriority={isFront ? "high" : "auto"}
-          placeholder="blur"
-          blurDataURL={"/couples/couple1.png"}
         />
         <motion.div
           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-38 h-38 z-10"

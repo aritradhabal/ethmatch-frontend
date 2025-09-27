@@ -1,5 +1,5 @@
 import React from "react";
-import Footer from "@/custom-components/Footer";
+import Footer from "./(index)/Footer";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
