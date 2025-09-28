@@ -1,13 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { signOut } from "next-auth/react";
 import React from "react";
 
 const page = () => {
   return (
-    <div>
-      <Input />
+    <div className="flex justify-center items-center ">
       <Button onClick={() => signOut({ redirectTo: "/" })}>Sign Out</Button>
     </div>
   );
