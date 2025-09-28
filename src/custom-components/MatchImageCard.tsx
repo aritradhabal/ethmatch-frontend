@@ -1,11 +1,18 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { SendHorizontal, Lock } from "lucide-react";
+import {
+  MiniKit,
+  tokenToDecimals,
+  Tokens,
+  PayCommandInput,
+} from "@worldcoin/minikit-js";
 import { sendLightHapticFeedbackCommand } from "@/utils/haptics";
+import { useSession } from "next-auth/react";
 
 export default function MatchImageCard({
   url,
@@ -14,6 +21,85 @@ export default function MatchImageCard({
   url: string;
   contact: string;
 }) {
+  const session = useSession();
+  const [paid, setPaid] = useState(false);
+  const sendPayment = async () => {
+    sendLightHapticFeedbackCommand();
+    const res = await fetch("/api/initiate-payment", {
+      method: "POST",
+    });
+    const { id } = await res.json();
+
+    const payload: PayCommandInput = {
+      reference: id,
+      to: "0xbcb60c70a4b3178bea91e8ad04e5ed73aa48a9c7",
+      tokens: [
+        {
+          symbol: Tokens.WLD,
+          token_amount: tokenToDecimals(0.1, Tokens.WLD).toString(),
+        },
+        {
+          symbol: Tokens.USDC,
+          token_amount: tokenToDecimals(5, Tokens.USDC).toString(),
+        },
+      ],
+      description: "Pay and Lock In your relationship",
+    };
+
+    if (!MiniKit.isInstalled()) {
+      return;
+    }
+
+    const { finalPayload } = await MiniKit.commandsAsync.pay(payload);
+    console.log(finalPayload);
+    if (finalPayload.status == "success") {
+      const res = await fetch(`/api/confirm-payment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ payload: finalPayload }),
+      });
+
+      const payment = await res.json();
+
+      if (payment.success) {
+        sendLightHapticFeedbackCommand();
+        setPaid(true);
+        const payload = {
+          address: session.data?.user.id,
+          name: "locked",
+          username: session.data?.user.username,
+          lookingFor: id,
+          verified: "Orb",
+        };
+
+        try {
+          const response = await fetch("/api/create", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const contentType = response.headers.get("content-type") || "";
+          const body = contentType.includes("application/json")
+            ? await response.json()
+            : await response.text();
+
+          console.log("Create status:", response.status, "body:", body);
+
+          if (response.status === 200) return true;
+          if (response.status === 400) return false; // Invalid user data
+          if (response.status === 500) return false; // Failed to create node
+          if (response.status === 502) return false; // Upstream unreachable (proxy)
+          return response.ok;
+        } catch (error) {
+          console.error(error);
+          return false;
+        }
+      }
+    }
+  };
   const handleMessage = () => {
     sendLightHapticFeedbackCommand();
     if (!contact) return;
@@ -44,7 +130,9 @@ export default function MatchImageCard({
           <SendHorizontal />
         </Button>
         <Button
-          onClick={sendLightHapticFeedbackCommand}
+          onClick={() => {
+            sendLightHapticFeedbackCommand();
+          }}
           variant={"match"}
           className="bg-lime-300 w-[120px] font-lexend tracking-normal text-xs flex flex-row justify-center items-center gap-x-1.5"
         >
