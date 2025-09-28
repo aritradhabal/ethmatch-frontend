@@ -216,7 +216,7 @@ const Card = ({
   const isFront = id === cards[cards.length - 1].id;
 
   const rotate = useTransform(() => {
-    var offset = 0;
+    let offset = 0;
     if (isFront) {
       offset = 0;
     } else {
